@@ -97,11 +97,11 @@ Ukratko, obavezno u dokumentaciji referencirati `uv run python -m app.cli.main_c
 - Ingestion pipeline treba da mapira front-matter u tagove `jurisdikcija`, `kanal`, `tip_politike`, plus dodatne oznake za lokacije (`city`, `pickup_type`) i guidelines (`korak`, `instrukcija`) kako bi RAG retrieval mogao da pruži precizne odgovore (npr. "najbliži servis" ili "uputstvo za reklamaciju").
 
 ### Korak 2 – Mock servisi za stanje i statuse
-- Napraviti `app/services/order_status_service.py` i `app/services/shipping_status_service.py` koji vraćaju statičke JSON-ove (2-3 porudžbine) i jasno označene statusne tranzicije (`PREPARING`, `SHIPPED`, `DELIVERED`).
-- Izložiti te servise kroz Typer/FastAPI stubove (npr. `app/api/mock_order_api.py`) kako bi CLI `ask` komanda mogla da se poveže kad se implementira tool-calling. U response strukturu uključiti polja sa opisom na srpskom (`status: str  # kratki opis logističkog statusa`).
-- Dodati unit testove koji pokrivaju „poznati order ID“ i „nepoznat order ID“ scenarije da bi se kasnije lako zamenilo mock implementacijama realnih konektora.
+- Implementirani su `app/services/order_status_service.py` (mock OrderStatus servis sa `OrderStatusRecord` datasetom A1001–A1003) i `app/services/shipping_status_service.py` (shipping checkpoint timeline sa statusima PREPARING → HANDOFF → IN_TRANSIT → DELIVERED). Servisi vraćaju `OrderStatus`/`ShippingCheckpoint` objekte spremne za dalju orkestraciju.
+- `AssistantService` sada koristi nove module i vraća `shipping_checkpoints` pored `order_status`, a CLI `ask` komanda prikazuje timeline (timestamp, lokacija, opis) uz tracking link i ETA kada je dostupna.
+- Sledeći korak u sklopu ovog rada je da se ovi servisi izlože i kao Typer/FastAPI stub endpointi i pokriju jednostavnim unit testovima (poznat/nepoznat order ID) da bi se spremno zamenili realnim konektorima.
 
 ### Korak 3 – Sumarni plan naredna 2-3 koraka
-1. **Povezati CLI sa mock servisima** – ažurirati `AssistantService.handle_query` da koristi nove stubove i da kroz `ask` komandu vraća kombinovani odgovor (tekst + statusna tabela).
+1. **Izložiti mock servise preko API-ja** – napraviti `app/api/mock_order_api.py` i opcionalno Typer komande koje direktno pozivaju `OrderStatusService`/`ShippingStatusService`, čime se omogućava integraciono testiranje bez CLI-ja.
 2. **Automatizovati ingestion internih dokumenata** – napisati skriptu `uv run python -m app.ingest.policies` koja učitava markdown fajlove iz Koraka 1, taguje ih i puni Milvus Lite.
 3. **Dodati observability hook-ove** – nakon što CLI koristi mock servise i ingestion pipeline, povezati `structlog`/OpenTelemetry tako da svako pitanje dobije trace ID i jasno logovane tool pozive (ključni zahtev iz poglavlja 4).
