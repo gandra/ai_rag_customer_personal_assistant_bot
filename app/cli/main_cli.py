@@ -6,14 +6,21 @@ import asyncio
 
 import typer
 
+from typing import Optional
+
 from ..services.assistant_service import AssistantService
 
 app = typer.Typer(help="CLI interfejs za customer assistant bota.")
 _service = AssistantService()
 
 
+@app.callback()
+def main() -> None:
+    """Osnovni interfejs za pomoć API pozivima."""
+
+
 @app.command()
-def ask(question: str, order_id: str | None = typer.Option(None, help="Opcioni broj porudžbine")) -> None:
+def ask(question: str, order_id: Optional[str] = typer.Option(None, help="Opcioni broj porudžbine")) -> None:
     """Postavlja pitanje botu i ispisuje stub odgovor."""
 
     result = asyncio.run(_service.handle_query(question, order_id))

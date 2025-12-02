@@ -64,3 +64,27 @@ Ovaj pristup omogućava da se iterate lokalno bez troškova, a kada su promptovi
 3. Implementirati ingestion pipeline sa automatskim tagovanjem dokumenta i testovima preciznosti.
 4. Izgraditi PoC orchestrator (LlamaIndex + Ollama) prema gorenavedenom planu.
 5. Nakon validacije, evaluirati koju produkcionu arhitekturu (A, B ili C) biramo i optimizovati TCO.
+
+## 10. CLI pomoć i completion opcije
+
+```
+uv run python -m app.cli.main_cli --help
+                                                
+ Usage: python -m app.cli.main_cli [OPTIONS] COMMAND [ARGS]...
+ CLI interfejs za customer assistant bota.
+╭─ Options ─────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --install-completion          Install completion for the current shell.                              │
+│ --show-completion             Show completion for the current shell, to copy it or customize the     │
+│                               installation.                                                          │
+│ --help                        Show this message and exit.                                            │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────────╮
+│ ask   Postavlja pitanje botu i ispisuje stub odgovor.                                                │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
+
+- **Struktura komande** – bazni `Typer` app je sada roditeljski komandni group, a `ask` je podkomanda koja prihvata pitanje i opciono `--order-id`. Svi novi CLI alati treba registrovati kao dodatne komande da bi help ostao konzistentan.
+- **`--install-completion`** – Typer generiše skript za auto-complete (bash/zsh/fish). Ova opcija instalira skriptu za aktivnu shell sesiju (npr. `eval "$(uv run python -m app.cli.main_cli --install-completion bash)`), pa korisnik dobija tab-completion za komande i argumente.
+- **`--show-completion`** – umesto automatske instalacije, prikazuje raw completion skriptu u stdout kako bi se mogla ručno kopirati ili prilagoditi custom shell konfiguraciji. Koristan je kada repo živi u sandboxu bez prava upisa u globalne shell konfiguracije.
+
+Ukratko, obavezno u dokumentaciji referencirati `uv run python -m app.cli.main_cli ask "Pitanje"` kada treba stub odgovor i naglasiti da completion flagovi olakšavaju rad developera dok iteriraju nad CLI komandama.
