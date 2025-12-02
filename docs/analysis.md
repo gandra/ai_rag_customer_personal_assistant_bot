@@ -101,6 +101,13 @@ Ukratko, obavezno u dokumentaciji referencirati `uv run python -m app.cli.main_c
 - `AssistantService` sada koristi nove module i vraća `shipping_checkpoints` pored `order_status`, a CLI `ask` komanda prikazuje timeline (timestamp, lokacija, opis) uz tracking link i ETA kada je dostupna.
 - Sledeći korak u sklopu ovog rada je da se ovi servisi izlože i kao Typer/FastAPI stub endpointi i pokriju jednostavnim unit testovima (poznat/nepoznat order ID) da bi se spremno zamenili realnim konektorima.
 
+### Izloženi mock servisi (API + CLI)
+- FastAPI rute u `app/api/routes.py` sada imaju dodatne endpoint-e:
+  - `GET /api/orders/{order_id}` – vraća `OrderStatusResponse` (status, ETA, tracking URL, note iz mock baze).
+  - `GET /api/shipping/{order_id}` – vraća kompletan shipping timeline kao listu `ShippingCheckpoint` objekata.
+- Za rad u terminalu dodata je zasebna Typer aplikacija `app/cli/mock_cli.py` sa komandama `order-status` i `shipping-timeline` (pokretanje: `uv run python -m app.cli.mock_cli order-status A1002`). Ove komande koriste iste mock servise bez potrebe da se poziva ceo assistant flow.
+- API i CLI zajedno omogućavaju QA timu da validira Dataset/Mock edge case-ove (poznat vs. nepoznat order ID) pre nego što se priključi pravi backend servis.
+
 ### Korak 3 – Sumarni plan naredna 2-3 koraka
 1. **Izložiti mock servise preko API-ja** – napraviti `app/api/mock_order_api.py` i opcionalno Typer komande koje direktno pozivaju `OrderStatusService`/`ShippingStatusService`, čime se omogućava integraciono testiranje bez CLI-ja.
 2. **Automatizovati ingestion internih dokumenata** – napisati skriptu `uv run python -m app.ingest.policies` koja učitava markdown fajlove iz Koraka 1, taguje ih i puni Milvus Lite.
