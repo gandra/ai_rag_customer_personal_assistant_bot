@@ -92,9 +92,9 @@ Ukratko, obavezno u dokumentaciji referencirati `uv run python -m app.cli.main_c
 ## 11. Korak-po-korak implementacija (trenutni fokus)
 
 ### Korak 1 – Generisanje internih dokumenata
-- Kreirati folder `rag_customer_personal_assistant_bot/data/policies/` sa bar tri markdown fajla: `shipping-policy.md`, `returns-policy.md`, `warranty-playbook.md`. Svaki fajl treba header sa metapodacima (region, verzija, datum) i jasne sekcije koje bot može da citira (npr. "Kada je porudžbina na čekanju" ili "Koraci za RMA").
-- Dodati kratka rezimea istih dokumenata (npr. u `docs/policy-summaries.md`) kako bi QA tim znao šta je već pokriveno i kako se dokumenti mapiraju na persona/use-case tabele iz poglavlja 2.
-- U ingestion pipeline-u planirati tagove `jurisdikcija`, `kanal`, `tip_politike` kako bi kasnije bilo moguće filtrirati retrieval (npr. samo EU GDPR compliant sadržaj).
+- Kreiran je folder `data/policies/` sa pet markdown fajlova: `shipping-policy.md`, `returns-policy.md`, `warranty-playbook.md`, `authorized-service-locations.md`, `returns-howto.md`. Svaki dokument sadrži front-matter metapodatke (`region`, `document_version`, `last_reviewed`, `channel`) i sekcije koje pokrivaju SLA, eskalacije, servisne lokacije i korak-po-korak vodiče (fotografije, RMA, pickup checkpoints).
+- Sažeci i mapiranje tema → tagova dodati su u `docs/policy-summaries.md`, čime QA i ops tim odmah vide šta je pokriveno (logistika, servisne adrese, proces reklamacije) i kako to mapira na personas/use-case scenarije iz poglavlja 2.
+- Ingestion pipeline treba da mapira front-matter u tagove `jurisdikcija`, `kanal`, `tip_politike`, plus dodatne oznake za lokacije (`city`, `pickup_type`) i guidelines (`korak`, `instrukcija`) kako bi RAG retrieval mogao da pruži precizne odgovore (npr. "najbliži servis" ili "uputstvo za reklamaciju").
 
 ### Korak 2 – Mock servisi za stanje i statuse
 - Napraviti `app/services/order_status_service.py` i `app/services/shipping_status_service.py` koji vraćaju statičke JSON-ove (2-3 porudžbine) i jasno označene statusne tranzicije (`PREPARING`, `SHIPPED`, `DELIVERED`).
