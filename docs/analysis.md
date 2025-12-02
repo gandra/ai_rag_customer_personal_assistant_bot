@@ -85,6 +85,23 @@ uv run python -m app.cli.main_cli --help
 
 - **Struktura komande** – bazni `Typer` app je sada roditeljski komandni group, a `ask` je podkomanda koja prihvata pitanje i opciono `--order-id`. Svi novi CLI alati treba registrovati kao dodatne komande da bi help ostao konzistentan.
 - **`--install-completion`** – Typer generiše skript za auto-complete (bash/zsh/fish). Ova opcija instalira skriptu za aktivnu shell sesiju (npr. `eval "$(uv run python -m app.cli.main_cli --install-completion bash)`), pa korisnik dobija tab-completion za komande i argumente.
-- **`--show-completion`** – umesto automatske instalacije, prikazuje raw completion skriptu u stdout kako bi se mogla ručno kopirati ili prilagoditi custom shell konfiguraciji. Koristan je kada repo živi u sandboxu bez prava upisa u globalne shell konfiguracije.
+- **`--show-completion`** – umesto automatske instalacije, ispiše generisanu skriptu za autocomplete na stdout (npr. `uv run python -m app.cli.main_cli --show-completion zsh`). Tipično se rezultat preusmeri u fajl ili direktno u `source` komandu kako bi se ručno dodao u `.zshrc`, `.bashrc` ili specifičan CI shell bez potrebe da Typer pokušava da upisuje u korisničke konfiguracije.
 
 Ukratko, obavezno u dokumentaciji referencirati `uv run python -m app.cli.main_cli ask "Pitanje"` kada treba stub odgovor i naglasiti da completion flagovi olakšavaju rad developera dok iteriraju nad CLI komandama.
+
+## 11. Korak-po-korak implementacija (trenutni fokus)
+
+### Korak 1 – Generisanje internih dokumenata
+- Kreirati folder `rag_customer_personal_assistant_bot/data/policies/` sa bar tri markdown fajla: `shipping-policy.md`, `returns-policy.md`, `warranty-playbook.md`. Svaki fajl treba header sa metapodacima (region, verzija, datum) i jasne sekcije koje bot može da citira (npr. "Kada je porudžbina na čekanju" ili "Koraci za RMA").
+- Dodati kratka rezimea istih dokumenata (npr. u `docs/policy-summaries.md`) kako bi QA tim znao šta je već pokriveno i kako se dokumenti mapiraju na persona/use-case tabele iz poglavlja 2.
+- U ingestion pipeline-u planirati tagove `jurisdikcija`, `kanal`, `tip_politike` kako bi kasnije bilo moguće filtrirati retrieval (npr. samo EU GDPR compliant sadržaj).
+
+### Korak 2 – Mock servisi za stanje i statuse
+- Napraviti `app/services/order_status_service.py` i `app/services/shipping_status_service.py` koji vraćaju statičke JSON-ove (2-3 porudžbine) i jasno označene statusne tranzicije (`PREPARING`, `SHIPPED`, `DELIVERED`).
+- Izložiti te servise kroz Typer/FastAPI stubove (npr. `app/api/mock_order_api.py`) kako bi CLI `ask` komanda mogla da se poveže kad se implementira tool-calling. U response strukturu uključiti polja sa opisom na srpskom (`status: str  # kratki opis logističkog statusa`).
+- Dodati unit testove koji pokrivaju „poznati order ID“ i „nepoznat order ID“ scenarije da bi se kasnije lako zamenilo mock implementacijama realnih konektora.
+
+### Korak 3 – Sumarni plan naredna 2-3 koraka
+1. **Povezati CLI sa mock servisima** – ažurirati `AssistantService.handle_query` da koristi nove stubove i da kroz `ask` komandu vraća kombinovani odgovor (tekst + statusna tabela).
+2. **Automatizovati ingestion internih dokumenata** – napisati skriptu `uv run python -m app.ingest.policies` koja učitava markdown fajlove iz Koraka 1, taguje ih i puni Milvus Lite.
+3. **Dodati observability hook-ove** – nakon što CLI koristi mock servise i ingestion pipeline, povezati `structlog`/OpenTelemetry tako da svako pitanje dobije trace ID i jasno logovane tool pozive (ključni zahtev iz poglavlja 4).
