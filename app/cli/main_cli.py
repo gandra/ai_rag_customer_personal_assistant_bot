@@ -1,0 +1,28 @@
+"""Typer CLI za eksperimentisanje sa botom."""
+
+from __future__ import annotations
+
+import asyncio
+
+import typer
+
+from ..services.assistant_service import AssistantService
+
+app = typer.Typer(help="CLI interfejs za customer assistant bota.")
+_service = AssistantService()
+
+
+@app.command()
+def ask(question: str, order_id: str | None = typer.Option(None, help="Opcioni broj porudžbine")) -> None:
+    """Postavlja pitanje botu i ispisuje stub odgovor."""
+
+    result = asyncio.run(_service.handle_query(question, order_id))
+    typer.echo(result.message)
+    if result.order_status:
+        typer.echo(f"Status porudžbine: {result.order_status.status}")
+    if result.referenced_documents:
+        typer.echo("Reference: " + ", ".join(result.referenced_documents))
+
+
+if __name__ == "__main__":
+    app()
